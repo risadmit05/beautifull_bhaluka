@@ -34,7 +34,10 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                   onPressed: () {
                     Navigator.of(context).pop(true); // Exit the app
                   },
-                  child: Text("Exit"),
+                  child: Text(
+                    "Exit",
+                    
+                  ),
                 ),
               ],
             );

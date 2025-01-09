@@ -25,6 +25,7 @@ dependencies:
   internet_connection_checker: ^3.0.1
   open_settings_plus: ^0.4.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -40,3 +41,9 @@ flutter:
 
   assets:
    - assets/
+  fonts:
+    - family: Solaiman Lipi
+      fonts:
+        - asset: assets/fonts/SolaimanLipi.ttf
+          weight: 700
+          

@@ -102,6 +102,11 @@ class DrawerPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'বিউটিফুল ভালুকা স্মার্ট অ্যাপ একের ভিতর সব। ভালুকার প্রয়োজনীয় সব কিছু এখন বিউটিফুল ভালুকা স্মার্ট অ্যাপে।',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                    fontFamily: 'Solaiman Lipi'),
               ),
             )
           ],

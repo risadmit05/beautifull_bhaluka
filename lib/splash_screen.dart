@@ -40,7 +40,11 @@ class _SplashScreenState extends State<SplashScreen> {
           Text(
             'বিউটিফুল ভালুকার স্মার্ট অ্যাপে আপনাকে স্বাগতম',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                fontFamily: 'Solaiman Lipi'),
           ),
         ],
       ),
