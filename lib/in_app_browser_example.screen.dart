@@ -1,7 +1,14 @@
+import 'dart:io';
+
+import 'package:beautiful_bhaluka/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:open_settings_plus/core/open_settings_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'drawer.dart'; // Ensure this file exists in your project
 
@@ -36,7 +43,6 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                   },
                   child: Text(
                     "Exit",
-                    
                   ),
                 ),
               ],
@@ -46,16 +52,104 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
         false; // Return false if the dialog is dismissed
   }
 
+  static void downloadCallback(String id, int status, int progress) {
+    DownloadTaskStatus taskStatus = DownloadTaskStatus.values[status];
+    print("Download progress===============================: $progress%");
+
+    if (taskStatus == DownloadTaskStatus.enqueued ||
+        taskStatus == DownloadTaskStatus.running) {
+      // Handle enqueued or running status
+      print("Download progress===============================: $progress%");
+    }
+
+    if (taskStatus == DownloadTaskStatus.complete) {
+      // Open file when the download is complete
+      _showDownloadCompleteNotification(id);
+    }
+  }
+
+  static void _showDownloadCompleteNotification(String taskId) async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'high_importance_channel', // Channel ID
+      'High Importance Notifications', // Channel name
+      channelDescription: 'This channel is used for important notifications.',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      'File Successfully Download', // Title
+      'This is a test notification', // Body
+      notificationDetails,
+      payload: 'Test Payload',
+    );
+  }
+
   bool isConnected = true;
   bool _isDialogOpen = false;
+  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+  bool isRefreshing = false;
+
   @override
   void initState() {
-    getLoadInternetChecker();
+    _startConnectionChecker();
+    FlutterDownloader.registerCallback(downloadCallback);
     super.initState();
   }
 
+  Future<void> _downloadFile(String url) async {
+    debugPrint(
+        "==================================================================");
+    debugPrint("Download Task url: $url");
+    await requestPermissions();
+
+    Directory appDocDir = Directory.systemTemp;
+    String savePath = appDocDir.path;
+
+    final taskId = await FlutterDownloader.enqueue(
+      url: url,
+      savedDir: '/storage/emulated/0/Download',
+      // savedDir: savePath,
+      showNotification: true, // Show notification
+      openFileFromNotification: true, // Open file when the download is complete
+    );
+    // FlutterDownloader.open(taskId: taskId!);
+    debugPrint("Download Task ID: $taskId");
+    // Wait for download to complete
+    // FlutterDownloader.registerCallback((id, status, progress) {
+    //   debugPrint("Download Task ID: $progress");
+    //   DownloadTaskStatus taskStatus = DownloadTaskStatus.values[status];
+    //   if (taskStatus == DownloadTaskStatus.complete) {
+    //     _showDownloadCompleteNotification(id);
+    //   }
+    // });
+  }
+
+  Future<void> requestPermissions() async {
+    var storageStatus = await Permission.storage.status;
+    if (storageStatus.isDenied) {
+      // Handle permission denied case
+      if (await Permission.storage.request().isDenied) {
+        // Show a dialog or notification that the permission is required
+      }
+    }
+    var notificationStatus = await Permission.notification.status;
+    if (notificationStatus.isDenied) {
+      if (await Permission.notification.request().isDenied) {
+        // Handle the scenario where notification permission is denied
+      }
+    }
+  }
+
   final connectionChecker = InternetConnectionChecker.instance;
-  getLoadInternetChecker() async {
+  _startConnectionChecker() async {
     connectionChecker.onStatusChange.listen(
       (InternetConnectionStatus status) {
         if (status == InternetConnectionStatus.connected) {
@@ -178,6 +272,17 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
     );
   }
 
+  Future<void> _refreshList() async {
+    print('Refresh');
+    setState(() {
+      isRefreshing = true;
+    });
+    await webViewController.reload();
+    setState(() {
+      isRefreshing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -200,23 +305,51 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
             "Beautiful Bhaluka",
             style: TextStyle(color: Colors.white, fontSize: 22),
           ),
+          // actions: [
+          //   ElevatedButton(
+          //     onPressed: () {},
+          //     child: Icon(
+          //       FontAwesomeIcons.chrome,
+          //     ),
+          //   ),
+          //   SizedBox(
+          //     width: 20,
+          //   )
+          // ],
         ),
         drawer: DrawerPage(),
-        body: Column(
-          children: [
-            // Progress bar to indicate loading
-            _progress < 1.0
-                ? LinearProgressIndicator(value: _progress)
-                : const SizedBox.shrink(),
-            Expanded(
-              child: _isDialogOpen
-                  ? Center()
-                  : InAppWebView(
+        body: RefreshIndicator(
+          onRefresh: _refreshList,
+          triggerMode: RefreshIndicatorTriggerMode.onEdge,
+          child: Column(
+            children: [
+              // Progress bar to indicate loading
+              _progress < 1.0
+                  ? LinearProgressIndicator(value: _progress)
+                  : const SizedBox.shrink(),
+              Expanded(
+                child: _isDialogOpen
+                    ? Center()
+                    : InAppWebView(
                       initialUrlRequest: URLRequest(
                           url: WebUri("https://beautifulbhaluka.com/")),
                       onWebViewCreated: (controller) {
                         webViewController = controller;
                       },
+                      pullToRefreshController: PullToRefreshController(
+                        options: PullToRefreshOptions(
+                          color: Colors.blue,
+                        ),
+                        onRefresh: () async {
+                          if (await webViewController.canGoBack()) {
+                            webViewController.goBack();
+                          } else {
+                      
+                            webViewController.reload();
+                          }
+                          // pullToRefreshController.endRefreshing();
+                        },
+                      ),
                       initialSettings: InAppWebViewSettings(
                         allowUniversalAccessFromFileURLs: true,
                         clearCache: true,
@@ -234,20 +367,27 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                       },
                       onLoadStop: (controller, url) {
                         setState(() {
+                          isRefreshing =
+                              false; // Stop the refresh spinner after loading
                           _progress =
                               1.0; // Set progress to 100% when loading is complete
                         });
                       },
                       onProgressChanged: (controller, progress) {
                         setState(() {
-                          _progress =
-                              progress / 100.0; // Update progress dynamically
+                          _progress = progress /
+                              100.0; // Update progress dynamically
                         });
+                      },
+                      onDownloadStartRequest: (controller, url) async {
+                        // Trigger file download
+                        _downloadFile(url.url.toString());
                       },
                       shouldOverrideUrlLoading:
                           (controller, navigationAction) async {
                         final uri = navigationAction.request.url!;
-                        if (uri.scheme == 'http' || uri.scheme == 'https') {
+                        if (uri.scheme == 'http' ||
+                            uri.scheme == 'https') {
                           // Allow navigation within the web view
                           return NavigationActionPolicy.ALLOW;
                         } else if (await canLaunchUrl(uri)) {
@@ -262,8 +402,9 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                             "JavaScript Console: ${consoleMessage.message}");
                       },
                     ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

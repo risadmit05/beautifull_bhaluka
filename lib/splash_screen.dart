@@ -29,24 +29,33 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(50.0),
-            child: Image.asset('assets/logo.png'),
-          ),
-          Text(
-            'বিউটিফুল ভালুকার স্মার্ট অ্যাপে আপনাকে স্বাগতম',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-                fontFamily: 'Solaiman Lipi'),
-          ),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Image.asset(
+                'assets/logo.png',
+                fit: BoxFit.cover,
+                height: 150,
+              ),
+            ),
+            Center(
+              child: Text(
+                'বিউটিফুল ভালুকার স্মার্ট অ্যাপে আপনাকে স্বাগতম',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                    fontFamily: 'Solaiman Lipi'),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: SizedBox(
         height: 50,

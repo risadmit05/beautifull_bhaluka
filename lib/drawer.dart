@@ -68,6 +68,21 @@ class DrawerPage extends StatelessWidget {
       }
     }
 
+    Future<void> openChrome() async {
+      /// Opens the YouTube app for a specific channel
+
+      const String url =
+          "https://beautifulbhaluka.com/"; // Fallback URL for browser
+
+      // Check if the YouTube app can handle the URL
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        // Open in browser if YouTube app is not available
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    }
+
     /// Opens a YouTube video by URL
     Future<void> shareApp() async {
       Share.share(
@@ -102,10 +117,11 @@ class DrawerPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
                 'বিউটিফুল ভালুকা স্মার্ট অ্যাপ একের ভিতর সব। ভালুকার প্রয়োজনীয় সব কিছু এখন বিউটিফুল ভালুকা স্মার্ট অ্যাপে।',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black.withOpacity(0.8),
                     fontFamily: 'Solaiman Lipi'),
               ),
             )
@@ -128,6 +144,22 @@ class DrawerPage extends StatelessWidget {
               ),
             );
           },
+        ),
+        ListTile(
+          leading: Icon(
+            FontAwesomeIcons.chrome,
+            color: Colors.grey,
+          ),
+          title: Text('To Visit Website'),
+          onTap: () {
+            Navigator.of(context).pop();
+            openChrome();
+          },
+          trailing: const Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.grey,
+            size: 15,
+          ),
         ),
 
         // Notifications Toggle
