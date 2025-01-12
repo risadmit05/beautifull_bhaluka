@@ -1,11 +1,7 @@
-import 'dart:io';
-
-import 'package:beautiful_bhaluka/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:open_settings_plus/core/open_settings_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,82 +50,53 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
 
   static void downloadCallback(String id, int status, int progress) {
     DownloadTaskStatus taskStatus = DownloadTaskStatus.values[status];
-    print("Download progress===============================: $progress%");
 
     if (taskStatus == DownloadTaskStatus.enqueued ||
         taskStatus == DownloadTaskStatus.running) {
       // Handle enqueued or running status
-      print("Download progress===============================: $progress%");
     }
 
     if (taskStatus == DownloadTaskStatus.complete) {
       // Open file when the download is complete
-      _showDownloadCompleteNotification(id);
     }
-  }
-
-  static void _showDownloadCompleteNotification(String taskId) async {
-    const AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-      'high_importance_channel', // Channel ID
-      'High Importance Notifications', // Channel name
-      channelDescription: 'This channel is used for important notifications.',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidNotificationDetails,
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      0, // Notification ID
-      'File Successfully Download', // Title
-      'This is a test notification', // Body
-      notificationDetails,
-      payload: 'Test Payload',
-    );
   }
 
   bool isConnected = true;
   bool _isDialogOpen = false;
-  final GlobalKey<RefreshIndicatorState> refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
-  bool isRefreshing = false;
-
+  late PullToRefreshController _pullToRefreshController;
   @override
   void initState() {
     _startConnectionChecker();
     FlutterDownloader.registerCallback(downloadCallback);
+    loadWebViewPullToRefresh();
+
     super.initState();
   }
 
+  loadWebViewPullToRefresh() async {
+    _pullToRefreshController = PullToRefreshController(
+      options: PullToRefreshOptions(
+        color: Colors.blue, // Set the color of the refresh indicator
+      ),
+      onRefresh: () async {
+        // Reload the webview
+        await webViewController.reload();
+        // Notify the controller that the refresh is complete
+        _pullToRefreshController.endRefreshing();
+      },
+    );
+  }
+
   Future<void> _downloadFile(String url) async {
-    debugPrint(
-        "==================================================================");
-    debugPrint("Download Task url: $url");
     await requestPermissions();
 
-    Directory appDocDir = Directory.systemTemp;
-    String savePath = appDocDir.path;
-
-    final taskId = await FlutterDownloader.enqueue(
+    await FlutterDownloader.enqueue(
       url: url,
       savedDir: '/storage/emulated/0/Download',
       // savedDir: savePath,
       showNotification: true, // Show notification
       openFileFromNotification: true, // Open file when the download is complete
     );
-    // FlutterDownloader.open(taskId: taskId!);
-    debugPrint("Download Task ID: $taskId");
-    // Wait for download to complete
-    // FlutterDownloader.registerCallback((id, status, progress) {
-    //   debugPrint("Download Task ID: $progress");
-    //   DownloadTaskStatus taskStatus = DownloadTaskStatus.values[status];
-    //   if (taskStatus == DownloadTaskStatus.complete) {
-    //     _showDownloadCompleteNotification(id);
-    //   }
-    // });
   }
 
   Future<void> requestPermissions() async {
@@ -216,9 +183,11 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    "বিউটিফুল ভালুকা স্মার্ট অ্যাপের সেবা পেতে ইন্টারনেট সংযোগ চালু করেন।",
+                    "বিউটিফুল ভালুকা স্মার্ট অ্যাপের সেবা পেতে ইন্টারনেট সংযোগ চালু করুন",
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 22,
+                      fontFamily: 'Solaiman Lipi',
+                      fontWeight: FontWeight.w700,
                       color: Colors.grey[700],
                     ),
                     textAlign: TextAlign.center,
@@ -272,15 +241,8 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
     );
   }
 
-  Future<void> _refreshList() async {
-    print('Refresh');
-    setState(() {
-      isRefreshing = true;
-    });
+  Future<void> _refreshPage() async {
     await webViewController.reload();
-    setState(() {
-      isRefreshing = false;
-    });
   }
 
   @override
@@ -305,106 +267,73 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
             "Beautiful Bhaluka",
             style: TextStyle(color: Colors.white, fontSize: 22),
           ),
-          // actions: [
-          //   ElevatedButton(
-          //     onPressed: () {},
-          //     child: Icon(
-          //       FontAwesomeIcons.chrome,
-          //     ),
-          //   ),
-          //   SizedBox(
-          //     width: 20,
-          //   )
-          // ],
         ),
         drawer: DrawerPage(),
-        body: RefreshIndicator(
-          onRefresh: _refreshList,
-          triggerMode: RefreshIndicatorTriggerMode.onEdge,
-          child: Column(
-            children: [
-              // Progress bar to indicate loading
-              _progress < 1.0
-                  ? LinearProgressIndicator(value: _progress)
-                  : const SizedBox.shrink(),
-              Expanded(
-                child: _isDialogOpen
-                    ? Center()
-                    : InAppWebView(
-                      initialUrlRequest: URLRequest(
-                          url: WebUri("https://beautifulbhaluka.com/")),
-                      onWebViewCreated: (controller) {
-                        webViewController = controller;
-                      },
-                      pullToRefreshController: PullToRefreshController(
-                        options: PullToRefreshOptions(
-                          color: Colors.blue,
-                        ),
-                        onRefresh: () async {
-                          if (await webViewController.canGoBack()) {
-                            webViewController.goBack();
-                          } else {
-                      
-                            webViewController.reload();
-                          }
-                          // pullToRefreshController.endRefreshing();
-                        },
-                      ),
-                      initialSettings: InAppWebViewSettings(
-                        allowUniversalAccessFromFileURLs: true,
-                        clearCache: true,
-                        javaScriptEnabled: true,
-                        allowContentAccess: true,
-                        allowFileAccess: true,
-                        supportZoom: true, // Allow zooming
-                        mediaPlaybackRequiresUserGesture: false,
-                        javaScriptCanOpenWindowsAutomatically: true,
-                      ),
-                      onLoadStart: (controller, url) {
-                        setState(() {
-                          _progress = 0.0; // Reset progress on load start
-                        });
-                      },
-                      onLoadStop: (controller, url) {
-                        setState(() {
-                          isRefreshing =
-                              false; // Stop the refresh spinner after loading
-                          _progress =
-                              1.0; // Set progress to 100% when loading is complete
-                        });
-                      },
-                      onProgressChanged: (controller, progress) {
-                        setState(() {
-                          _progress = progress /
-                              100.0; // Update progress dynamically
-                        });
-                      },
-                      onDownloadStartRequest: (controller, url) async {
-                        // Trigger file download
-                        _downloadFile(url.url.toString());
-                      },
-                      shouldOverrideUrlLoading:
-                          (controller, navigationAction) async {
-                        final uri = navigationAction.request.url!;
-                        if (uri.scheme == 'http' ||
-                            uri.scheme == 'https') {
-                          // Allow navigation within the web view
-                          return NavigationActionPolicy.ALLOW;
-                        } else if (await canLaunchUrl(uri)) {
-                          // Handle external links (e.g., mailto, tel)
-                          await launchUrl(uri);
-                          return NavigationActionPolicy.CANCEL;
-                        }
-                        return NavigationActionPolicy.CANCEL;
-                      },
-                      onConsoleMessage: (controller, consoleMessage) {
-                        debugPrint(
-                            "JavaScript Console: ${consoleMessage.message}");
-                      },
+        body: Stack(
+          children: [
+            // Progress bar to indicate loading
+
+            _isDialogOpen
+                ? Center()
+                : InAppWebView(
+                    initialUrlRequest: URLRequest(
+                        url: WebUri("https://beautifulbhaluka.com/")),
+                    onWebViewCreated: (controller) {
+                      webViewController = controller;
+                    },
+                    pullToRefreshController: _pullToRefreshController,
+                    initialSettings: InAppWebViewSettings(
+                      allowUniversalAccessFromFileURLs: true,
+                      clearCache: true,
+                      javaScriptEnabled: true,
+                      allowContentAccess: true,
+                      allowFileAccess: true,
+                      supportZoom: true, // Allow zooming
+                      mediaPlaybackRequiresUserGesture: false,
+                      javaScriptCanOpenWindowsAutomatically: true,
                     ),
-              ),
-            ],
-          ),
+                    onLoadStart: (controller, url) {
+                      setState(() {
+                        _progress = 0.0; // Reset progress on load start
+                      });
+                    },
+                    onLoadStop: (controller, url) {
+                      setState(() {
+                        _progress =
+                            1.0; // Set progress to 100% when loading is complete
+                      });
+                      _pullToRefreshController.endRefreshing();
+                    },
+                    onProgressChanged: (controller, progress) {
+                      setState(() {
+                        _progress =
+                            progress / 100.0; // Update progress dynamically
+                      });
+                    },
+                    onDownloadStartRequest: (controller, url) async {
+                      // Trigger file download
+                      _downloadFile(url.url.toString());
+                    },
+                    shouldOverrideUrlLoading:
+                        (controller, navigationAction) async {
+                      final uri = navigationAction.request.url!;
+                      if (uri.scheme == 'http' || uri.scheme == 'https') {
+                        // Allow navigation within the web view
+                        return NavigationActionPolicy.ALLOW;
+                      } else if (await canLaunchUrl(uri)) {
+                        // Handle external links (e.g., mailto, tel)
+                        await launchUrl(uri);
+                        return NavigationActionPolicy.CANCEL;
+                      }
+                      return NavigationActionPolicy.CANCEL;
+                    },
+                    onConsoleMessage: (controller, consoleMessage) {
+                      debugPrint(
+                          "JavaScript Console: ${consoleMessage.message}");
+                    },
+                  ),
+            if (_progress < 1.0) LinearProgressIndicator(value: _progress)
+          ],
         ),
       ),
     );

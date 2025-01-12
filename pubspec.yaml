@@ -25,7 +25,6 @@ dependencies:
   internet_connection_checker: ^3.0.1
   open_settings_plus: ^0.4.0
   flutter_downloader: ^1.11.8
-  flutter_local_notifications: ^18.0.1
 
 
 dev_dependencies:

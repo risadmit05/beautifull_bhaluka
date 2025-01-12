@@ -1,4 +1,4 @@
-package com.devsvally.beautifulbhaluka
+package com.primaxitbd.beautifulbhaluka
 
 import io.flutter.embedding.android.FlutterActivity
 
