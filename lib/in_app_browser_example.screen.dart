@@ -63,6 +63,7 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
 
   bool isConnected = true;
   bool _isDialogOpen = false;
+  bool isFirst = true;
   late PullToRefreshController _pullToRefreshController;
   @override
   void initState() {
@@ -241,10 +242,6 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
     );
   }
 
-  Future<void> _refreshPage() async {
-    await webViewController.reload();
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -269,6 +266,7 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
           ),
         ),
         drawer: DrawerPage(),
+        backgroundColor: Colors.white,
         body: Stack(
           children: [
             // Progress bar to indicate loading
@@ -303,6 +301,7 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                             1.0; // Set progress to 100% when loading is complete
                       });
                       _pullToRefreshController.endRefreshing();
+                      isFirst = false;
                     },
                     onProgressChanged: (controller, progress) {
                       setState(() {
@@ -332,7 +331,21 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                           "JavaScript Console: ${consoleMessage.message}");
                     },
                   ),
-            if (_progress < 1.0) LinearProgressIndicator(value: _progress)
+            if (isFirst)
+              Positioned(
+                  child: Container(
+                      color: Colors.white,
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(
+                          color: Colors.blue,
+                        ),
+                      ))),
+
+            if (_progress < 1.0 && !isFirst)
+              LinearProgressIndicator(value: _progress)
           ],
         ),
       ),
