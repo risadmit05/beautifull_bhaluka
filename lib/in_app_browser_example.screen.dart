@@ -336,12 +336,26 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
                   child: Container(
                       color: Colors.white,
                       alignment: Alignment.center,
-                      child: SizedBox(
-                        height: 100,
-                        width: 100,
-                        child: CircularProgressIndicator(
-                          color: Colors.blue,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 40,
+                            width: 40,
+                            child: CircularProgressIndicator(
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Text(
+                            "Please Wait....",
+                            style: TextStyle(
+                                color: Colors.blueAccent, fontSize: 22),
+                          )
+                        ],
                       ))),
 
             if (_progress < 1.0 && !isFirst)
