@@ -118,6 +118,7 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
 
   final connectionChecker = InternetConnectionChecker.instance;
   _startConnectionChecker() async {
+
     connectionChecker.onStatusChange.listen(
       (InternetConnectionStatus status) {
         if (status == InternetConnectionStatus.connected) {
@@ -136,6 +137,7 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
         }
       },
     );
+
   }
 
   @override

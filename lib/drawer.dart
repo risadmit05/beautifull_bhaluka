@@ -30,7 +30,6 @@ class DrawerPage extends StatelessWidget {
         }
       }
     }
-    
 
     /// Opens WhatsApp with a specific phone number
     Future<void> openWhatsApp(String phoneNumber) async {
@@ -53,10 +52,8 @@ class DrawerPage extends StatelessWidget {
     Future<void> openYouTube(String videoUrl) async {
       /// Opens the YouTube app for a specific channel
 
-      const String channelUrl =
-          "youtube://www.youtube.com/@bbhaluka"; // Deep link for YouTube app
-      const String fallbackUrl =
-          "https://www.youtube.com/@bbhaluka"; // Fallback URL for browser
+      const String channelUrl = "youtube://www.youtube.com/@bbhaluka";
+      const String fallbackUrl = "https://www.youtube.com/@bbhaluka";
 
       // Check if the YouTube app can handle the URL
       if (await canLaunchUrl(Uri.parse(channelUrl))) {
@@ -94,7 +91,7 @@ class DrawerPage extends StatelessWidget {
     /// Opens a YouTube video by URL
     Future<void> rateUs() async {
       const url =
-          'https://play.google.com/store/apps/details?id=com.devsvally.beautifullbhaluka'; // Replace with your app's package name
+          'https://play.google.com/store/apps/details?id=com.devsvally.beautifullbhaluka';
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       } else {
@@ -104,232 +101,243 @@ class DrawerPage extends StatelessWidget {
       }
     }
 
-    return NavigationDrawer(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      children: [
-        Column(
-          children: [
-            Image.asset(
-              'assets/logo.png',
-              height: 120,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Drawer(
+      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Header with logo and description
+          buildHeader(context, isDark),
+          const SizedBox(height: 10),
+
+          // Main navigation items
+          buildTile(
+            context,
+            icon: FontAwesomeIcons.house,
+            title: 'HOME',
+            onTap: () => navigateToHome(context),
+          ),
+          buildTile(
+            context,
+            icon: FontAwesomeIcons.chrome,
+            title: 'Visit Website',
+            onTap: openChrome,
+          ),
+
+          // Social media section
+          buildSectionHeader('Connect With Us'),
+          buildSocialTile(
+            context,
+            icon: FontAwesomeIcons.facebook,
+            title: 'Facebook Page',
+            color: const Color(0xFF1877F2),
+            onTap: () => openFacebook('beautifulbhaluka2'),
+          ),
+          buildSocialTile(
+            context,
+            icon: FontAwesomeIcons.facebook,
+            title: 'Facebook Page 2.0',
+            color: const Color(0xFF1877F2),
+            onTap: () => openFacebook('beautifulbhaluka4'),
+          ),
+          buildSocialTile(
+            context,
+            icon: FontAwesomeIcons.youtube,
+            title: 'YouTube',
+            color: const Color(0xFFFF0000),
+            onTap: () => openYouTube,
+          ),
+          buildSocialTile(
+            context,
+            icon: FontAwesomeIcons.whatsapp,
+            title: 'WhatsApp',
+            color: const Color(0xFF25D366),
+            onTap: () => openWhatsApp('+18053159616'),
+          ),
+
+          // App actions section
+          buildSectionHeader('App Actions'),
+          buildTile(
+            context,
+            icon: FontAwesomeIcons.share,
+            title: 'Share App',
+            onTap: shareApp,
+          ),
+          buildTile(
+            context,
+            icon: FontAwesomeIcons.star,
+            title: 'Rate Us',
+            onTap: () => rateUs(),
+          ),
+
+          // Exit button
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: buildExitButton(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildHeader(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.blueGrey[800] : const Color(0xFF4CAF50),
+        borderRadius: const BorderRadius.only(
+          bottomRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text(
-                'বিউটিফুল ভালুকা স্মার্ট অ্যাপ একের ভিতর সব। ভালুকার প্রয়োজনীয় সব কিছু এখন বিউটিফুল ভালুকা স্মার্ট অ্যাপে।',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black.withOpacity(0.8),
-                    fontFamily: 'Solaiman Lipi'),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.transparent,
+              child: Image.asset('assets/logo.png', height: 80),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'বিউটিফুল ভালুকা',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Solaiman Lipi',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'ভালুকার প্রয়োজনীয় সব কিছু এখন বিউটিফুল ভালুকা স্মার্ট অ্যাপে',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.4,
+                color: Colors.white.withOpacity(0.9),
+                fontFamily: 'Solaiman Lipi',
               ),
-            )
-          ],
-        ),
-        Divider(),
-        ListTile(
-          leading: Icon(
-            FontAwesomeIcons.house,
-            color: Colors.grey,
+            ),
           ),
-          title: Text('HOME'),
-          onTap: () {
-            Navigator.of(context).pop();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    const InAppBrowserExampleScreen(), // Replace with your next screen widget
-              ),
-            );
-          },
-        ),
-        ListTile(
-          leading: Icon(
-            FontAwesomeIcons.chrome,
-            color: Colors.grey,
-          ),
-          title: Text('To Visit Website'),
-          onTap: () {
-            Navigator.of(context).pop();
-            openChrome();
-          },
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 15,
-          ),
-        ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
 
-        // Notifications Toggle
-
-        ListTile(
-          leading: const Icon(
-            FontAwesomeIcons.facebook,
-            color: Colors.grey,
-          ),
-          title: Text(
-            'Facebook Page',
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 15,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            openFacebook('beautifulbhaluka2');
-          },
+  Widget buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 15, left: 20, right: 20, bottom: 5),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
+          color: Colors.grey,
         ),
+      ),
+    );
+  }
 
-        ListTile(
-          leading: const Icon(
-            FontAwesomeIcons.facebook,
-            color: Colors.grey,
+  Widget buildTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, size: 20),
+      title: Text(title, style: const TextStyle(fontSize: 15)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 15),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+      minLeadingWidth: 5,
+    );
+  }
+
+  Widget buildSocialTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: FaIcon(icon, size: 20, color: color),
+      title: Text(title, style: const TextStyle(fontSize: 15)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 15),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+      minLeadingWidth: 5,
+    );
+  }
+
+  Widget buildExitButton(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.exit_to_app, color: Colors.red),
+      title: const Text('Exit', style: TextStyle(color: Colors.red)),
+      onTap: () => showExitDialog(context),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+    );
+  }
+
+  void showExitDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Exit App'),
+        content: const Text('Are you sure you want to exit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
-          title: Text(
-            'Facebook Page 2.0',
+          TextButton(
+            onPressed: () => exit(0),
+            child: const Text('Exit', style: TextStyle(color: Colors.red)),
           ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 15,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            openFacebook('beautifulbhaluka4');
-          },
+        ],
+      ),
+    );
+  }
+
+  void navigateToHome(BuildContext context) {
+    Navigator.pop(context);
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => const InAppBrowserExampleScreen(),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: animation,
+          child: child,
         ),
-
-        ListTile(
-          leading: const Icon(
-            FontAwesomeIcons.youtube,
-            color: Colors.grey,
-          ),
-          title: Text(
-            'Youtube',
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            size: 15,
-            color: Colors.grey,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            openYouTube('https://www.youtube.com/@bbhaluka');
-          },
-        ),
-
-        ListTile(
-          leading: const Icon(
-            FontAwesomeIcons.whatsapp,
-            color: Colors.grey,
-          ),
-          title: Text(
-            'Whatsapp',
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            size: 15,
-            color: Colors.grey,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            openWhatsApp('+18053159616');
-          },
-        ),
-
-        // ListTile(
-        //   leading: const Icon(
-        //     FontAwesomeIcons.info,
-        //     color: Colors.grey,
-        //   ),
-        //   onTap: () {},
-        //   title: Text(
-        //     'App Info',
-        //   ),
-        //   trailing: const Icon(
-        //     Icons.arrow_forward_ios,
-        //     color: Colors.grey,
-        //     size: 15,
-        //   ),
-        // ),
-
-        ListTile(
-          leading: Icon(
-            FontAwesomeIcons.share,
-            color: Colors.grey,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            shareApp();
-          },
-          title: Text(
-            'Share App',
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 15,
-          ),
-        ),
-
-        ListTile(
-          leading: const Icon(
-            FontAwesomeIcons.star,
-            color: Colors.grey,
-          ),
-          onTap: () {
-            Navigator.of(context).pop();
-            rateUs();
-          },
-          title: Text(
-            'Rate Us',
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.grey,
-            size: 15,
-          ),
-        ),
-
-        // Logout
-        ListTile(
-          leading: const Icon(
-            Icons.logout,
-            color: Colors.redAccent,
-          ),
-          title: Text(
-            'Exit',
-          ),
-          onTap: () {
-            // Add logout functionality
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Logout'),
-                content: const Text('Are you sure you want to logout?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      exit(0);
-                      // Perform logout operation
-                      // Navigator.of(context).pop();
-                    },
-                    child: const Text('Logout'),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
+      ),
     );
   }
 }
