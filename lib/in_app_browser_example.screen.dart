@@ -1,143 +1,176 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:open_settings_plus/core/open_settings_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'drawer.dart'; // Ensure this file exists in your project
+import 'drawer.dart';
 
 class InAppBrowserExampleScreen extends StatefulWidget {
   const InAppBrowserExampleScreen({super.key});
 
   @override
-  _InAppBrowserExampleScreenState createState() =>
+  State<InAppBrowserExampleScreen> createState() =>
       _InAppBrowserExampleScreenState();
 }
 
 class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
   late InAppWebViewController webViewController;
-  double _progress = 0.0; // Progress to track loading
-  _showExitConfirmationDialog(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text("Exit App"),
-              content: Text("Are you sure you want to exit the app?"),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(false); // Stay in the app
-                  },
-                  child: Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(true); // Exit the app
-                  },
-                  child: Text(
-                    "Exit",
-                  ),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false; // Return false if the dialog is dismissed
-  }
-
-  static void downloadCallback(String id, int status, int progress) {
-    DownloadTaskStatus taskStatus = DownloadTaskStatus.values[status];
-
-    if (taskStatus == DownloadTaskStatus.enqueued ||
-        taskStatus == DownloadTaskStatus.running) {
-      // Handle enqueued or running status
-    }
-
-    if (taskStatus == DownloadTaskStatus.complete) {
-      // Open file when the download is complete
-    }
-  }
-
+  double _progress = 0.0;
   bool isConnected = true;
   bool _isDialogOpen = false;
   bool isFirst = true;
   late PullToRefreshController _pullToRefreshController;
+  final connectionChecker = InternetConnectionChecker.createInstance();
+
   @override
   void initState() {
-    _startConnectionChecker();
-    FlutterDownloader.registerCallback(downloadCallback);
-    loadWebViewPullToRefresh();
-
     super.initState();
+    FlutterDownloader.registerCallback(downloadCallback);
+    _startConnectionChecker();
+    _initPullToRefresh();
   }
 
-  loadWebViewPullToRefresh() async {
+  static void downloadCallback(String id, int status, int progress) {
+    if (DownloadTaskStatus.values[status] == DownloadTaskStatus.complete) {
+      // File downloaded
+    }
+  }
+
+  void _initPullToRefresh() {
     _pullToRefreshController = PullToRefreshController(
-      options: PullToRefreshOptions(
-        color: Colors.blue, // Set the color of the refresh indicator
-      ),
+      options: PullToRefreshOptions(color: Colors.blue),
       onRefresh: () async {
-        // Reload the webview
         await webViewController.reload();
-        // Notify the controller that the refresh is complete
         _pullToRefreshController.endRefreshing();
       },
     );
   }
 
   Future<void> _downloadFile(String url) async {
-    await requestPermissions();
-
+    await _requestPermissions();
     await FlutterDownloader.enqueue(
       url: url,
       savedDir: '/storage/emulated/0/Download',
-      // savedDir: savePath,
-      showNotification: true, // Show notification
-      openFileFromNotification: true, // Open file when the download is complete
+      showNotification: true,
+      openFileFromNotification: true,
     );
   }
 
-  Future<void> requestPermissions() async {
-    var storageStatus = await Permission.storage.status;
-    if (storageStatus.isDenied) {
-      // Handle permission denied case
-      if (await Permission.storage.request().isDenied) {
-        // Show a dialog or notification that the permission is required
-      }
+  Future<void> _requestPermissions() async {
+    if (await Permission.storage.isDenied) {
+      await Permission.storage.request();
     }
-    var notificationStatus = await Permission.notification.status;
-    if (notificationStatus.isDenied) {
-      if (await Permission.notification.request().isDenied) {
-        // Handle the scenario where notification permission is denied
-      }
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
     }
   }
 
-  final connectionChecker = InternetConnectionChecker.instance;
-  _startConnectionChecker() async {
+  void _startConnectionChecker() {
+    connectionChecker.onStatusChange.listen((status) {
+      if (status == InternetConnectionStatus.connected) {
+        if (_isDialogOpen) {
+          _isDialogOpen = false;
+          Navigator.of(context).pop();
+        }
+        setState(() => isConnected = true);
+      } else {
+        setState(() => isConnected = false);
+        _showNoInternetDialog();
+      }
+    });
+  }
 
-    connectionChecker.onStatusChange.listen(
-      (InternetConnectionStatus status) {
-        if (status == InternetConnectionStatus.connected) {
-          isConnected = true;
-        } else {
-          isConnected = false;
-        }
-        if (!isConnected) {
-          showNoInternetDialog();
-        } else {
-          if (_isDialogOpen == true) {
-            _isDialogOpen = false;
-            Navigator.of(context).pop();
-            setState(() {});
-          }
-        }
-      },
+  void _showNoInternetDialog() {
+    if (_isDialogOpen) return;
+
+    setState(() => _isDialogOpen = true);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off, size: 60, color: Colors.redAccent),
+              const SizedBox(height: 20),
+              const Text("No Internet Connection",
+                  style: TextStyle(fontSize: 20)),
+              const SizedBox(height: 20),
+              Text(
+                "বিউটিফুল ভালুকা স্মার্ট অ্যাপের সেবা পেতে ইন্টারনেট সংযোগ চালু করুন",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontFamily: 'Solaiman Lipi',
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: OpenSettingsPlusAndroid().wifi,
+                      icon: const Icon(Icons.wifi),
+                      label: const Text("Enable Wi-Fi"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: OpenSettingsPlusAndroid().dataUsage,
+                      icon: const Icon(Icons.signal_cellular_alt),
+                      label: const Text("Enable Data"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
     );
+  }
 
+  Future<bool> _onWillPop() async {
+    if (await webViewController.canGoBack()) {
+      webViewController.goBack();
+      return false;
+    }
+    return await _showExitConfirmationDialog();
+  }
+
+  Future<bool> _showExitConfirmationDialog() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Exit App"),
+            content: const Text("Are you sure you want to exit the app?"),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel")),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Exit")),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   @override
@@ -146,222 +179,80 @@ class _InAppBrowserExampleScreenState extends State<InAppBrowserExampleScreen> {
     super.dispose();
   }
 
-  void showNoInternetDialog() {
-    if (!_isDialogOpen) {
-      // Only show dialog if it's not already open
-      setState(() {
-        _isDialogOpen = true; // Mark dialog as open
-      });
-    }
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Non-dismissible dialog
-      builder: (BuildContext context) {
-        return PopScope(
-          canPop: false,
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            elevation: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.wifi_off,
-                    size: 60,
-                    color: Colors.redAccent,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "No Internet Connection",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "বিউটিফুল ভালুকা স্মার্ট অ্যাপের সেবা পেতে ইন্টারনেট সংযোগ চালু করুন",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontFamily: 'Solaiman Lipi',
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey[700],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 40),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            OpenSettingsPlusAndroid().wifi();
-                          },
-                          icon: Icon(Icons.wifi),
-                          label: Text("Enable Wi-Fi"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            OpenSettingsPlusAndroid().dataUsage();
-                          },
-                          icon: Icon(Icons.signal_cellular_alt),
-                          label: Text("Enable Data"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
-      onWillPop: () async {
-        bool isBack = await webViewController.canGoBack();
-        if (isBack) {
-          webViewController.goBack();
-          return false;
-        } else {
-          return await _showExitConfirmationDialog(context);
-        }
-
-        // Show an exit confirmation dialog
-      },
+      onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color.fromARGB(255, 22, 136, 128),
-          iconTheme: IconThemeData(color: Colors.white),
-          title: const Text(
-            "Beautiful Bhaluka",
-            style: TextStyle(color: Colors.white, fontSize: 22),
-          ),
+          backgroundColor: const Color(0xFF168880),
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text("Beautiful Bhaluka",
+              style: TextStyle(color: Colors.white)),
         ),
         drawer: DrawerPage(),
-        backgroundColor: Colors.white,
         body: Stack(
           children: [
-            // Progress bar to indicate loading
-
-            _isDialogOpen
-                ? Center()
-                : InAppWebView(
-                    initialUrlRequest: URLRequest(
-                        url: WebUri("https://beautifulbhaluka.com/")),
-                    onWebViewCreated: (controller) {
-                      webViewController = controller;
-                    },
-                    pullToRefreshController: _pullToRefreshController,
-                    initialSettings: InAppWebViewSettings(
-                      allowUniversalAccessFromFileURLs: true,
-                      clearCache: true,
-                      javaScriptEnabled: true,
-                      allowContentAccess: true,
-                      allowFileAccess: true,
-                      supportZoom: true, // Allow zooming
-                      mediaPlaybackRequiresUserGesture: false,
-                      javaScriptCanOpenWindowsAutomatically: true,
-                    ),
-                    onLoadStart: (controller, url) {
-                      setState(() {
-                        _progress = 0.0; // Reset progress on load start
-                      });
-                    },
-                    onLoadStop: (controller, url) {
-                      setState(() {
-                        _progress =
-                            1.0; // Set progress to 100% when loading is complete
-                      });
-                      _pullToRefreshController.endRefreshing();
-                      isFirst = false;
-                    },
-                    onProgressChanged: (controller, progress) {
-                      setState(() {
-                        _progress =
-                            progress / 100.0; // Update progress dynamically
-                      });
-                    },
-                    onDownloadStartRequest: (controller, url) async {
-                      // Trigger file download
-                      _downloadFile(url.url.toString());
-                    },
-                    shouldOverrideUrlLoading:
-                        (controller, navigationAction) async {
-                      final uri = navigationAction.request.url!;
-                      if (uri.scheme == 'http' || uri.scheme == 'https') {
-                        // Allow navigation within the web view
-                        return NavigationActionPolicy.ALLOW;
-                      } else if (await canLaunchUrl(uri)) {
-                        // Handle external links (e.g., mailto, tel)
-                        await launchUrl(uri);
-                        return NavigationActionPolicy.CANCEL;
-                      }
-                      return NavigationActionPolicy.CANCEL;
-                    },
-                    onConsoleMessage: (controller, consoleMessage) {
-                      debugPrint(
-                          "JavaScript Console: ${consoleMessage.message}");
-                    },
-                  ),
+            if (!_isDialogOpen)
+              InAppWebView(
+                initialUrlRequest:
+                    URLRequest(url: WebUri("https://beautifulbhaluka.com/")),
+                onWebViewCreated: (controller) =>
+                    webViewController = controller,
+                pullToRefreshController: _pullToRefreshController,
+                initialSettings: InAppWebViewSettings(
+                  javaScriptEnabled: true,
+                  supportZoom: true,
+                  mediaPlaybackRequiresUserGesture: false,
+                  javaScriptCanOpenWindowsAutomatically: true,
+                ),
+                onLoadStart: (_, __) => setState(() => _progress = 0.0),
+                onLoadStop: (_, __) {
+                  setState(() => _progress = 1.0);
+                  _pullToRefreshController.endRefreshing();
+                  isFirst = false;
+                },
+                onProgressChanged: (_, progress) =>
+                    setState(() => _progress = progress / 100),
+                onDownloadStartRequest: (_, url) =>
+                    _downloadFile(url.url.toString()),
+                shouldOverrideUrlLoading: (_, navAction) async {
+                  final uri = navAction.request.url!;
+                  if (["http", "https"].contains(uri.scheme))
+                    return NavigationActionPolicy.ALLOW;
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                    return NavigationActionPolicy.CANCEL;
+                  }
+                  return NavigationActionPolicy.CANCEL;
+                },
+                onConsoleMessage: (_, msg) =>
+                    debugPrint("Console: ${msg.message}"),
+              ),
             if (isFirst)
-              Positioned(
-                  child: Container(
-                      color: Colors.white,
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: CircularProgressIndicator(
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                          SizedBox(
-                            height: 10,
-                          ),
-                          Text(
-                            "Please Wait....",
-                            style: TextStyle(
-                                color: Colors.blueAccent, fontSize: 22),
-                          )
-                        ],
-                      ))),
-
+              Container(
+                color: Colors.white,
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    SizedBox(
+                      height: 50,
+                      width: 50,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 4, color: Colors.blueAccent),
+                    ),
+                    SizedBox(height: 10),
+                    Text("Loading...",
+                        style:
+                            TextStyle(color: Colors.blueAccent, fontSize: 18)),
+                  ],
+                ),
+              ),
             if (_progress < 1.0 && !isFirst)
-              LinearProgressIndicator(value: _progress)
+              LinearProgressIndicator(
+                  value: _progress, color: Colors.blueAccent),
           ],
         ),
       ),
