@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:beautiful_bhaluka/in_app_browser_example.screen.dart';
+import 'package:beautiful_bhaluka/in_app_browser_example_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -194,9 +194,9 @@ class DrawerPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? Colors.blueGrey[800] : const Color(0xFF4CAF50),
+        color: isDark ? Colors.blueGrey[800] : const Color(0xFF168880),
         borderRadius: const BorderRadius.only(
-          bottomRight: Radius.circular(20),
+          bottomRight: Radius.circular(0),
         ),
       ),
       child: Column(
@@ -206,11 +206,19 @@ class DrawerPage extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
+              // color: Colors.white,
             ),
             child: CircleAvatar(
               radius: 50,
               backgroundColor: Colors.transparent,
-              child: Image.asset('assets/logo.png', height: 80),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 100,
+                  width: 100,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -266,7 +274,12 @@ class DrawerPage extends StatelessWidget {
   }) {
     return ListTile(
       leading: Icon(icon, size: 20),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
+      title: Text(title,
+          style: const TextStyle(
+              fontSize: 15,
+              fontFamily: 'Solaiman Lipi',
+              fontWeight: FontWeight.w400,
+              wordSpacing: 1.1)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 15),
       onTap: () {
         Navigator.pop(context);
@@ -286,7 +299,12 @@ class DrawerPage extends StatelessWidget {
   }) {
     return ListTile(
       leading: FaIcon(icon, size: 20, color: color),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
+      title: Text(title,
+          style: const TextStyle(
+              fontSize: 15,
+              fontFamily: 'Solaiman Lipi',
+              fontWeight: FontWeight.w400,
+              wordSpacing: 1.1)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 15),
       onTap: () {
         Navigator.pop(context);
@@ -300,7 +318,13 @@ class DrawerPage extends StatelessWidget {
   Widget buildExitButton(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.exit_to_app, color: Colors.red),
-      title: const Text('Exit', style: TextStyle(color: Colors.red)),
+      title: const Text('Exit',
+          style: TextStyle(
+              color: Colors.red,
+              fontSize: 15,
+              fontFamily: 'Solaiman Lipi',
+              fontWeight: FontWeight.w600,
+              wordSpacing: 1.1)),
       onTap: () => showExitDialog(context),
       contentPadding: const EdgeInsets.symmetric(horizontal: 25),
     );
@@ -328,16 +352,19 @@ class DrawerPage extends StatelessWidget {
 
   void navigateToHome(BuildContext context) {
     Navigator.pop(context);
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => const InAppBrowserExampleScreen(),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: animation,
-          child: child,
+    Future.delayed(const Duration(milliseconds: 250), () {
+      Navigator.pushAndRemoveUntil(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 500),
+          pageBuilder: (_, __, ___) => const InAppBrowserExampleScreen(),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
         ),
-      ),
-    );
+        (route) => false,
+      );
+    });
   }
 }

@@ -1,4 +1,4 @@
-import 'package:beautiful_bhaluka/in_app_browser_example.screen.dart';
+import 'package:beautiful_bhaluka/in_app_browser_example_screen.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
