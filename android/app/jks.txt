@@ -1,0 +1,9 @@
+keytool -genkeypair \
+  -alias DEVSVALLY2025 \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000 \
+  -keystore beautiful-bhaluka.jks \
+  -storepass DEVSVALLY2025 \
+  -keypass DEVSVALLY2025 \
+  -dname "CN=Risasd Hossain, OU=Private, O=devsvally, L=Dhaka, S=Dhaka, C=BD"
